@@ -16,13 +16,15 @@ Assumptions
 
 For this archiver to work, you need a working public-inbox installation that has
 been initialised for your mailing list. Basically, you need to have run
-`public-inbox-init` and `public-inbox-index` for the list already (see their man
-pages for instructions). The archiver will run `public-inbox-mda --no-precheck`
-for each message, after first parsing the public-inbox config to find the list
-ID using either the posting_address or list_id config options from public-inbox.
-The archiver will also generate a permalink for the message based on the 'url'
-public-inbox config parameter and the message ID, which will be used by mailman
-for the Archived-At header.
+``public-inbox-init`` and ``public-inbox-index`` for the list already (see their
+man pages for instructions).
+
+The archiver will run ``public-inbox-mda --no-precheck`` for each message, after
+first parsing the public-inbox config to find the list ID using either the
+posting_address or list_id config options from public-inbox. The archiver will
+also generate a permalink for the message based on the 'url' public-inbox config
+parameter and the message ID, which will be used by mailman for the Archived-At
+header.
 
 Copyright & Licensing
 =====================
