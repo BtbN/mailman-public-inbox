@@ -8,7 +8,7 @@ the `Public Inbox`_ archiver.
 .. _Public Inbox: https://public-inbox.org
 
 The source code is available on Github
-https://gitlab.com/tohojo/mailman-public-inbox
+https://github.com/tohojo/mailman-public-inbox
 
 
 Assumptions
