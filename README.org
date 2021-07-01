@@ -1,0 +1,45 @@
+* Mailman archiver plugin for Public Inbox
+This module contains a [[https://www.list.org][Mailman]] archiver plugin which sends emails to the [[https://public-inbox.org][Public
+Inbox]] archiver.
+
+The source code is available on Github
+[[https://github.com/tohojo/mailman-public-inbox]]
+
+** Assumptions
+For this archiver to work, you need a working public-inbox installation that has
+been initialised for your mailing list. Basically, you need to have run
+=public-inbox-init= and =public-inbox-index= for the list already (see their man
+pages for instructions).
+
+The archiver will run =public-inbox-mda --no-precheck= for each message, after
+first parsing the public-inbox config to find the list ID using either the
+=posting_address= or =list_id= config options from public-inbox. The archiver
+will also generate a permalink for the message based on the 'url' public-inbox
+config parameter and the message ID, which will be used by mailman for the
+Archived-At header.
+
+** Configuration
+Install the module to your Python path so Mailman can find it. Then add this to
+your mailman.cfg:
+
+#+begin_src
+[archiver.public_inbox]
+class: mailman_public_inbox.PublicInbox
+configuration: /etc/mailman-public-inbox.cfg
+enable: yes
+#+end_src
+
+And copy over the =mailman-public-inbox.cfg= file from this repository to
+=/etc/=, adjusting the variables as necessary.
+
+The plugin will just call =public-inbox-mda=, so you need to already have
+configured public-inbox to recognise the list (i.e., run =public-inbox-init= and
+=public-inbox-index= beforehand. Since mailman will run public-inbox under its
+own credentials, permissions also need to be set to allow this; just setting the
+ownership of the public-inbox data directories to be the mailman user is one way
+to achieve this.
+
+** Copyright & Licensing
+This module is licensed under the [[http://www.gnu.org/licenses/gpl-3.0.html][GPL v3.0]]
+
+Copyright (C) 2021 by Toke Høiland-Jørgensen
