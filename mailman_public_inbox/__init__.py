@@ -19,12 +19,12 @@
 
 import logging
 import os
+import subprocess
 
 from mailman.config import config
 from mailman.config.config import external_configuration
 from mailman.interfaces.archiver import IArchiver
 from public import public
-from subprocess import PIPE, Popen
 from urllib.parse import urljoin
 from zope.interface import implementer
 
@@ -50,21 +50,31 @@ class PublicInbox:
 
         self.pi_config = {}
 
+    def _get_process_env(self):
+    def _run_command(self, args, **kwargs):
+        env = os.environ.copy()
+        env['PI_CONFIG'] = self.public_inbox_config
+        env['HOME'] = self.public_inbox_home
+        env['PATH'] = self.public_inbox_path
+
+        if env in kwargs:
+            kwargs['env'].update(env)
+        else:
+            kwargs['env'] = env
+
+        return subprocess.run(args, capture_output=True, **kwargs)
+
     def _parse_publicinbox_config(self):
         if self.pi_config:
             return
-        env = os.environ.copy()
-        env['PATH'] = self.public_inbox_path
 
-        proc = Popen(['git', 'config', '-z', '-l', '--includes',
-                      '--file', self.public_inbox_config],
-                     stdout=PIPE, stderr=PIPE, env=env)
-        stdout, stderr = proc.communicate()
+        proc = self._run_command(['git', 'config', '-z', '-l', '--includes',
+                                  '--file', self.public_inbox_config])
         if proc.returncode != 0:
             log.error('Error (%s) when reading public-inbox config: %s',
-                      proc.returncode, stderr)
+                      proc.returncode, proc.stderr)
 
-        for cfg in stdout.split(b'\0'):
+        for cfg in proc.stdout.split(b'\0'):
             try:
                 k, v = [i.decode() for i in cfg.split(b'\n', 1)]
             except (ValueError, UnicodeDecodeError):
@@ -110,21 +120,15 @@ class PublicInbox:
 
     def archive_message(self, mlist, msg):
         """See `IArchiver`."""
-        env = os.environ.copy()
-        env['ORIGINAL_RECIPIENT'] = mlist.posting_address
-        env['PI_CONFIG'] = self.public_inbox_config
-        env['HOME'] = self.public_inbox_home
-        env['PATH'] = self.public_inbox_path
+        env = {'ORIGINAL_RECIPIENT': mlist.posting_address}
         url = self.permalink(mlist, msg)
 
-        proc = Popen(
-            ['public-inbox-mda', '--no-precheck'],
-            stdin=PIPE, stdout=PIPE, stderr=PIPE,
-            universal_newlines=True, env=env)
-        _, stderr = proc.communicate(msg.as_string())
+        proc = self._run_command(['public-inbox-mda', '--no-precheck'],
+                                 input=msg.as_string(), env=env,
+                                 universal_newlines=True)
         if proc.returncode != 0:
             log.error('%s: public-inbox subprocess exited with error(%s): %s',
-                      msg['message-id'], proc.returncode, stderr)
+                      msg['message-id'], proc.returncode, proc.stderr)
         else:
             log.info('%s: Archived with public-inbox at %s',
                      msg['message-id'], url)
