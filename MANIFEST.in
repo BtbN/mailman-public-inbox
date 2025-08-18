@@ -1,0 +1,3 @@
+include README.org
+include LICENCE.txt
+include mailman-public-inbox.cfg

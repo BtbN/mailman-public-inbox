@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mailman-public-inbox"
+version = "0.2.0"
+description = "Mailman archiver plugin for Public Inbox"
+readme = {file = "README.org", content-type = "text/plain"}
+authors = [
+    {name = "Toke Høiland-Jørgensen", email = "toke@toke.dk"}
+]
+license = "GPL-3.0-or-later"
+keywords = ["email"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Topic :: Communications :: Email :: Mailing List Servers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+requires-python = ">=3.9"
+dependencies = [
+    "mailman",
+    "zope.interface",
+]
+
+[project.urls]
+Homepage = "https://github.com/tohojo/mailman-public-inbox/"
+Repository = "https://github.com/tohojo/mailman-public-inbox/"
+Issues = "https://github.com/tohojo/mailman-public-inbox/issues"
+
+[tool.setuptools]
+packages = ["mailman_public_inbox"]
+include-package-data = true
