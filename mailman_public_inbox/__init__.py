@@ -25,7 +25,7 @@ import subprocess
 from mailman.config import config
 from mailman.config.config import external_configuration
 from mailman.interfaces.archiver import IArchiver, ArchivePolicy
-from mailman.interfaces.listmanager import ListCreatedEvent, ListDeletingEvent
+from mailman.interfaces.listmanager import ListDeletingEvent
 from public import public
 from urllib.parse import urljoin
 from zope.event import classhandler
@@ -57,7 +57,6 @@ class PublicInbox:
         self.pi_config = {}
 
         if self.auto_create:
-            classhandler.handler(ListCreatedEvent, self.list_created_handler)
             classhandler.handler(ListDeletingEvent, self.list_deleting_handler)
 
     def _run_command(self, args, **kwargs):
@@ -129,6 +128,9 @@ class PublicInbox:
 
     def archive_message(self, mlist, msg):
         """See `IArchiver`."""
+        if not self._ensure_list_created(mlist):
+            return None
+
         env = {'ORIGINAL_RECIPIENT': mlist.posting_address}
         url = self.permalink(mlist, msg)
 
@@ -156,13 +158,21 @@ class PublicInbox:
             log.error('Error running public-inbox reload command: %s',
                       proc.stderr)
 
-    def list_created_handler(self, event):
-        if not self.is_enabled or not self.auto_create:
-            return
+    def _ensure_list_created(self, mlist):
+        if not self.auto_create:
+            return False
 
-        mlist = event.mailing_list
+        log.info(f"Attempting to create public-inbox for {mlist.list_name} with {mlist.archive_policy} and {mlist.advertised} and fqdn {mlist.fqdn_listname}. {mlist}")
+
+        if self._get_publicinbox_conf(mlist):
+            return True
+
+        log.info("Does not exist yet, proceeding.")
+
         if mlist.archive_policy != ArchivePolicy.public or not mlist.advertised:
-            return
+            return False
+
+        log.info(f"Passed pre-check, creating public-inbox.")
 
         proc = self._run_command(['public-inbox-init', '-V2',
                                   mlist.list_name,
@@ -172,11 +182,13 @@ class PublicInbox:
         if proc.returncode != 0:
             log.error('Unable to initialise public-inbox archive for list %s: %s',
                       mlist.list_name, proc.stderr)
+            return False
         else:
             log.info('Initialised public-inbox archive for list %s',
                      mlist.list_name)
 
         self._reload_public_inbox()
+        return True
 
     def list_deleting_handler(self, event):
         if not self.is_enabled or not self.auto_create:
