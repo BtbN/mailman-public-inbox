@@ -162,7 +162,7 @@ class PublicInbox:
         if not self.auto_create:
             return False
 
-        log.info(f"Attempting to create public-inbox for {mlist.list_name} with {mlist.archive_policy} and {mlist.advertised} and fqdn {mlist.fqdn_listname}. {mlist}")
+        log.info(f"Attempting to create public-inbox for {mlist.list_name} archive policy {mlist.archive_policy} and advertisement {mlist.advertised}. FQDN {mlist.fqdn_listname}.")
 
         if self._get_publicinbox_conf(mlist):
             return True
@@ -177,7 +177,7 @@ class PublicInbox:
         proc = self._run_command(['public-inbox-init', '-V2',
                                   mlist.list_name,
                                   os.path.join(self.public_inbox_home, mlist.list_name),
-                                  urljoin(self.base_url, mlist.list_name + "/"),
+                                  urljoin(self.base_url + "/", mlist.list_name + "/"),
                                   mlist.fqdn_listname])
         if proc.returncode != 0:
             log.error('Unable to initialise public-inbox archive for list %s: %s',
