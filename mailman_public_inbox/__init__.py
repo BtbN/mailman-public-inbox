@@ -66,7 +66,7 @@ class PublicInbox:
         env['HOME'] = self.public_inbox_home
         env['PATH'] = self.public_inbox_path
 
-        if env in kwargs:
+        if 'env' in kwargs:
             kwargs['env'].update(env)
         else:
             kwargs['env'] = env
